@@ -44,7 +44,7 @@ export function useBotpressBrain(tripData?: TripData) {
         const { Client } = await import('@botpress/chat');
         
         const client = await Client.connect({
-          webhookId: BOTPRESS_WEBHOOK_ID,
+          webhookId: process.env.NEXT_PUBLIC_BOTPRESS_WEBHOOK_ID!,
         });
 
         console.log('[Botpress] Connected. User:', client.user.id);
