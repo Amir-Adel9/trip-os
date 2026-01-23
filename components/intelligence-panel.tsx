@@ -73,6 +73,9 @@ export function IntelligencePanel({
         // Just a regular text response
         setAiResponse(response.reply || "No response text received.")
       }
+    } else {
+      // Handle null response
+      setAiResponse("No response received. Please try again.")
     }
     
     setLastCommand(null)
@@ -97,6 +100,9 @@ export function IntelligencePanel({
       } else {
         setAiResponse(response.reply || "No response received.")
       }
+    } else {
+      // Handle null response
+      setAiResponse("No response received. Please try again.")
     }
     
     setLastCommand(null)

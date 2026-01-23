@@ -150,6 +150,7 @@ ${JSON.stringify(newTripData, null, 2)}
         if (botReply) {
           console.log('[Botpress] Bot reply found:', botReply)
           const payload = botReply.payload as { text?: string; [key: string]: unknown };
+          setLoading(false); // Clear loading before returning
           return {
             reply: payload.text || '',
             metadata: payload,
@@ -158,15 +159,17 @@ ${JSON.stringify(newTripData, null, 2)}
       }
 
       console.warn('[Botpress] Timeout: No bot response after 60 seconds')
+      setLoading(false); // Clear loading before returning
       return { reply: 'No response received. Please try again.' };
       
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : 'Something went wrong';
       setError(message);
       console.error('[Botpress] Error:', err);
+      setLoading(false); // Clear loading on error
       return null;
     } finally {
-      setLoading(false);
+      setLoading(false); // Ensure loading is always cleared
     }
   }, []);
 
