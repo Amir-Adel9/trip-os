@@ -1,5 +1,5 @@
-import { ComponentExample } from "@/components/component-example";
+import { TripOS } from "@/components/trip-os"
 
 export default function Page() {
-return <ComponentExample />;
+  return <TripOS />
 }
