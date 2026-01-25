@@ -2,13 +2,13 @@
 
 import { useState, useEffect, useRef, useCallback } from "react"
 import Link from "next/link"
-import { Play, Plane, Sparkles, Loader2, Volume2, Pause, X } from "lucide-react"
+import { Play, Plane, Sparkles, Loader2, Volume2, Pause, X, MessageCircle, Send, ChevronUp, ChevronDown } from "lucide-react"
 import { DayNavigation } from "@/components/day-navigation"
 import { Timeline } from "@/components/timeline"
 import { IntelligencePanel } from "@/components/intelligence-panel"
 import type { TripData } from "@/lib/trip-types"
 import { generateTripBriefing, createAudioURL, revokeAudioURL } from "@/services/elevenlabs/tts"
-import { formatCurrency } from "@/lib/trip-utils"
+import { formatCurrency, extractTripJson, mapBotpressToTripData, isValidTripData } from "@/lib/trip-utils"
 
 const adaptationChips = [
   "Make it cheaper",
@@ -113,6 +113,206 @@ function AudioPlayerOverlay({
         <p className="text-center text-sm text-neutral-500 mt-4">
           {isLoading ? 'Generating briefing...' : isPlaying ? 'Playing...' : 'Tap to play'}
         </p>
+      </div>
+    </div>
+  )
+}
+
+// Mobile Intelligence Panel Component
+function MobileIntelligencePanel({
+  budget,
+  onReset,
+  onAdapt,
+  sendToBrain,
+  loading,
+  isReady,
+  error,
+}: {
+  budget: { total: number; spent: number; breakdown: { food: number; activity: number; travel: number }; currency: string }
+  onReset: () => void
+  onAdapt: (action: string, newTripData?: TripData) => void
+  sendToBrain: (text: string) => Promise<any>
+  loading: boolean
+  isReady: boolean
+  error: string | null
+}) {
+  const [isExpanded, setIsExpanded] = useState(true)
+  const [commandInput, setCommandInput] = useState("")
+  const [aiResponse, setAiResponse] = useState("")
+  const [lastCommand, setLastCommand] = useState<string | null>(null)
+
+  const handleCommand = async (e: React.FormEvent) => {
+    e.preventDefault()
+    if (!commandInput.trim() || !isReady || loading) return
+
+    const input = commandInput
+    setCommandInput("")
+    setLastCommand(input)
+    
+    const response = await sendToBrain(input)
+
+    if (response) {
+      const tripJson = extractTripJson(response)
+      
+      if (tripJson) {
+        const mappedData = mapBotpressToTripData(tripJson)
+        
+        if (mappedData && isValidTripData(mappedData)) {
+          setAiResponse("Itinerary updated successfully.")
+          onAdapt("update_received", mappedData)
+        } else {
+          setAiResponse(response.reply || "Received a trip update but the format was invalid.")
+        }
+      } else {
+        setAiResponse(response.reply || "No response text received.")
+      }
+    } else {
+      setAiResponse("No response received. Please try again.")
+    }
+    
+    setLastCommand(null)
+  }
+
+  const handleChipClick = async (chip: string) => {
+    if (!isReady || loading) return
+    
+    setLastCommand(chip)
+    const response = await sendToBrain(chip)
+    
+    if (response) {
+      const tripJson = extractTripJson(response)
+      if (tripJson) {
+        const mappedData = mapBotpressToTripData(tripJson)
+        if (mappedData && isValidTripData(mappedData)) {
+          setAiResponse(`Applied: ${chip}`)
+          onAdapt(chip, mappedData)
+        } else {
+          setAiResponse(response.reply || "Update failed.")
+        }
+      } else {
+        setAiResponse(response.reply || "No response received.")
+      }
+    } else {
+      setAiResponse("No response received. Please try again.")
+    }
+    
+    setLastCommand(null)
+  }
+
+  return (
+    <div className="lg:hidden fixed bottom-0 left-0 right-0 z-20">
+      {/* Expandable Panel */}
+      <div 
+        className={`bg-neutral-950/98 backdrop-blur-xl border-t border-neutral-800/50 shadow-2xl transition-all duration-300 ${
+          isExpanded ? 'max-h-[70vh]' : 'max-h-[140px]'
+        } overflow-hidden`}
+      >
+        {/* Expand/Collapse Handle */}
+        <button
+          type="button"
+          onClick={() => setIsExpanded(!isExpanded)}
+          className="w-full py-2 flex items-center justify-center gap-2 text-neutral-500 hover:text-neutral-300 transition-colors cursor-pointer"
+        >
+          <div className="w-10 h-1 rounded-full bg-neutral-700" />
+          {isExpanded ? (
+            <ChevronDown className="w-4 h-4 absolute right-4" />
+          ) : (
+            <ChevronUp className="w-4 h-4 absolute right-4" />
+          )}
+        </button>
+
+        <div className="px-4 pb-4 space-y-3">
+          {/* Budget Summary Row */}
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <div className="w-2 h-2 rounded-full bg-emerald-400 shadow-md shadow-emerald-400/50 animate-pulse" />
+              <span className="text-sm font-medium text-neutral-200">
+                Budget: {formatCurrency(budget.spent, budget.currency)}
+              </span>
+            </div>
+            <button
+              type="button"
+              onClick={onReset}
+              className="text-xs text-neutral-500 hover:text-neutral-300 transition-colors duration-300 cursor-pointer"
+            >
+              New Trip
+            </button>
+          </div>
+
+          {/* Expanded Content */}
+          {isExpanded && (
+            <>
+              {/* AI Response */}
+              <div className="bg-neutral-900/60 rounded-lg p-3">
+                <div className="flex items-start gap-2">
+                  <div className="w-5 h-5 rounded-md bg-orange-500/20 flex items-center justify-center shrink-0">
+                    {loading ? (
+                      <Loader2 className="w-3 h-3 text-orange-400 animate-spin" />
+                    ) : (
+                      <span className="text-[10px]">🏯</span>
+                    )}
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    {loading && lastCommand && (
+                      <p className="text-xs text-neutral-500 italic mb-1 truncate">{lastCommand}</p>
+                    )}
+                    {loading ? (
+                      <div className="space-y-1.5">
+                        <div className="h-2.5 bg-neutral-800/50 rounded animate-pulse w-full" />
+                        <div className="h-2.5 bg-neutral-800/50 rounded animate-pulse w-4/5" />
+                      </div>
+                    ) : (
+                      <p className="text-xs text-neutral-400 leading-relaxed line-clamp-3">
+                        {aiResponse || "Send a command to interact with Trip OS..."}
+                      </p>
+                    )}
+                    {error && (
+                      <p className="text-xs text-red-400 mt-1">{error}</p>
+                    )}
+                  </div>
+                </div>
+              </div>
+
+              {/* Command Input */}
+              <form onSubmit={handleCommand} className="relative">
+                <input
+                  type="text"
+                  value={commandInput}
+                  onChange={(e) => setCommandInput(e.target.value)}
+                  placeholder={!isReady ? "Connecting..." : "Command Trip OS..."}
+                  disabled={loading || !isReady}
+                  className="w-full bg-neutral-900/60 rounded-lg text-sm text-neutral-200 placeholder:text-neutral-600 px-4 py-3 pr-12 focus:outline-none focus:ring-1 focus:ring-emerald-500/30 transition-all disabled:opacity-50"
+                />
+                <button
+                  type="submit"
+                  disabled={loading || !isReady || !commandInput.trim()}
+                  className="absolute right-2 top-1/2 -translate-y-1/2 w-8 h-8 rounded-full bg-emerald-500/20 flex items-center justify-center text-emerald-400 hover:bg-emerald-500/30 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {loading ? (
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                  ) : (
+                    <Send className="w-4 h-4" />
+                  )}
+                </button>
+              </form>
+            </>
+          )}
+
+          {/* Quick Actions */}
+          <div className="flex gap-2">
+            {adaptationChips.map((chip) => (
+              <button
+                key={chip}
+                type="button"
+                onClick={() => handleChipClick(chip)}
+                disabled={loading || !isReady}
+                className="flex-1 px-3 py-2 rounded-lg bg-neutral-900/60 hover:bg-neutral-800/70 text-xs text-neutral-400 hover:text-neutral-200 transition-all duration-300 cursor-pointer border border-neutral-800/30 disabled:opacity-50"
+              >
+                {chip}
+              </button>
+            ))}
+          </div>
+        </div>
       </div>
     </div>
   )
@@ -273,12 +473,12 @@ export function Dashboard({
   }
 
   return (
-    <div className="min-h-screen bg-neutral-950 text-neutral-200">
+    <div className="min-h-screen flex flex-col bg-neutral-950 text-neutral-200">
       {/* Subtle radial vignette */}
       <div className="fixed inset-0 pointer-events-none bg-[radial-gradient(ellipse_at_center,transparent_0%,rgba(0,0,0,0.4)_100%)] opacity-60" />
       
       {/* Top Header Bar */}
-      <header className="h-12 flex items-center justify-center gap-6 relative z-10 bg-neutral-950/80 backdrop-blur-sm border-b border-neutral-800/30 animate-fade-in">
+      <header className="min-h-12 py-2 px-4 flex flex-wrap items-center justify-center gap-3 sm:gap-6 relative z-10 bg-neutral-950/80 backdrop-blur-sm border-b border-neutral-800/30 animate-fade-in">
         {/* Logo */}
         <Link href="/" className="flex items-center gap-2 group cursor-pointer">
           <div className="w-4 h-4 rounded-[3px] bg-white flex items-center justify-center shadow-md shadow-white/10 group-hover:shadow-emerald-400/20 transition-all duration-300 group-hover:scale-110">
@@ -287,7 +487,7 @@ export function Dashboard({
           <span className="text-sm font-medium text-neutral-200 group-hover:text-white transition-colors duration-300">Trip OS</span>
         </Link>
 
-        <div className="w-px h-5 bg-neutral-800/60" />
+        <div className="w-px h-5 bg-neutral-800/60 hidden sm:block" />
 
         {/* Briefing Button */}
         <button
@@ -303,20 +503,20 @@ export function Dashboard({
           ) : (
             <Play className="w-3 h-3 fill-current group-hover:scale-110 transition-transform duration-300" />
           )}
-          <span>{isBriefingLoading ? "Generating..." : "Briefing"}</span>
+          <span className="hidden xs:inline">{isBriefingLoading ? "Generating..." : "Briefing"}</span>
         </button>
 
-        <div className="w-px h-5 bg-neutral-800/60" />
+        <div className="w-px h-5 bg-neutral-800/60 hidden sm:block" />
 
         {/* Location with Icon */}
         <div className="flex items-center gap-2 group cursor-pointer">
           <Plane className="w-3 h-3 text-neutral-500 group-hover:text-emerald-400 transition-colors duration-300" />
-          <span className="text-sm text-neutral-200 group-hover:text-white transition-colors duration-300">{tripData.destination}</span>
+          <span className="text-sm text-neutral-200 group-hover:text-white transition-colors duration-300 max-w-[120px] sm:max-w-none truncate">{tripData.destination}</span>
         </div>
       </header>
 
       {/* 3-Column OS Layout */}
-      <div className="h-[calc(100vh-48px)] grid grid-cols-1 lg:grid-cols-[200px_1fr_320px] relative z-10">
+      <div className="flex-1 grid grid-cols-1 lg:grid-cols-[200px_1fr_320px] relative z-10 lg:overflow-hidden">
         {/* Left: Day Navigation */}
         <aside className="hidden lg:flex flex-col bg-neutral-950/40">
           <DayNavigation
@@ -327,7 +527,7 @@ export function Dashboard({
         </aside>
 
         {/* Center: Timeline with subtle gradient background */}
-        <main className="flex flex-col overflow-hidden relative">
+        <main className="flex flex-col lg:overflow-hidden relative min-h-0">
           {/* Subtle gradient behind timeline */}
           <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,rgba(16,185,129,0.03)_0%,transparent_60%)] pointer-events-none" />
           
@@ -351,7 +551,7 @@ export function Dashboard({
             </div>
           </div>
 
-          <div className="flex-1 overflow-y-auto scrollbar-thin relative z-10 pb-32 lg:pb-0">
+          <div className="flex-1 lg:overflow-y-auto scrollbar-thin relative z-10 pb-80 lg:pb-0">
             <Timeline day={currentDay} />
           </div>
         </main>
@@ -372,38 +572,15 @@ export function Dashboard({
       </div>
 
       {/* Mobile Intelligence Panel - Fixed Bottom */}
-      <div className="lg:hidden fixed bottom-0 left-0 right-0 z-20 bg-neutral-950/95 backdrop-blur-lg border-t border-neutral-800/50 shadow-2xl">
-        <div className="p-4 space-y-3">
-          {/* Budget Summary */}
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <div className="w-2 h-2 rounded-full bg-emerald-400 shadow-md shadow-emerald-400/50 animate-pulse" />
-              <span className="text-sm font-medium text-neutral-200">Budget: {formatCurrency(budget.spent, budget.currency)}</span>
-            </div>
-            <button
-              type="button"
-              onClick={onReset}
-              className="text-xs text-neutral-500 hover:text-neutral-300 transition-colors duration-300 cursor-pointer"
-            >
-              New Trip
-            </button>
-          </div>
-
-          {/* Quick Actions */}
-          <div className="flex gap-2">
-            {adaptationChips.map((chip) => (
-              <button
-                key={chip}
-                type="button"
-                onClick={() => onAdapt(chip)}
-                className="flex-1 px-3 py-2 rounded-md bg-neutral-900/60 hover:bg-neutral-800/70 text-xs text-neutral-400 hover:text-neutral-200 transition-all duration-300 cursor-pointer border border-neutral-800/30"
-              >
-              {chip}
-              </button>
-            ))}
-          </div>
-        </div>
-      </div>
+      <MobileIntelligencePanel
+        budget={budget}
+        onReset={onReset}
+        onAdapt={onAdapt}
+        sendToBrain={sendToBrain}
+        loading={loading}
+        isReady={isReady}
+        error={error}
+      />
 
       {/* Audio Player Overlay */}
       <AudioPlayerOverlay

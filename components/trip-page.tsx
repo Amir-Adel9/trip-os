@@ -120,13 +120,13 @@ export function TripPage() {
   }
 
   return (
-    <div className="relative min-h-screen bg-neutral-950 overflow-hidden text-white">
+    <div className="relative min-h-screen bg-neutral-950 text-white">
       {/* Shared gradient background - keeping consistent with home */}
       <div className="fixed inset-0 bg-[radial-gradient(ellipse_80%_50%_at_50%_-20%,rgba(120,119,198,0.15),transparent)]" />
       <div className="fixed top-0 left-1/4 w-96 h-96 bg-white/2 rounded-full blur-3xl" />
       <div className="fixed bottom-0 right-1/4 w-96 h-96 bg-white/2 rounded-full blur-3xl" />
 
-      <div className="absolute inset-0 z-10">
+      <div className="relative z-10">
         <Dashboard
           tripData={tripData}
           selectedDay={selectedDay}
