@@ -10,6 +10,7 @@ import { v } from "convex/values";
 export default defineSchema({
   trips: defineTable({
     destination: v.string(),
+    userId: v.optional(v.string()),
     title: v.string(),
     summary: v.string(),
     days: v.any(), // JSON array of TripDay objects
@@ -17,5 +18,5 @@ export default defineSchema({
     logs: v.any(), // JSON array of strings
     createdAt: v.number(),
     updatedAt: v.number(),
-  }),
+  }).index("by_user_id", ["userId"]),
 });

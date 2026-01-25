@@ -72,7 +72,7 @@ export function TripGallery({ trips, onSelectTrip, onCreateNew }: TripGalleryPro
           {trips.length > 0 && (
             <button
               onClick={onCreateNew}
-              className="group flex items-center gap-2 px-5 py-2.5 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-sm font-medium hover:bg-emerald-500/20 hover:border-emerald-500/30 transition-all duration-300 hover:scale-105 active:scale-95"
+              className="group flex items-center gap-2 px-5 py-2.5 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-sm font-medium hover:bg-emerald-500/20 hover:border-emerald-500/30 transition-all duration-300 hover:scale-105 active:scale-95 cursor-pointer"
             >
               <Plus className="w-4 h-4 transition-transform duration-300 group-hover:rotate-90" />
               <span>New Trip</span>
@@ -106,7 +106,7 @@ export function TripGallery({ trips, onSelectTrip, onCreateNew }: TripGalleryPro
               
               <button
                 onClick={onCreateNew}
-                className="group relative flex items-center gap-3 px-7 py-3.5 rounded-2xl bg-gradient-to-r from-emerald-500 to-teal-500 text-neutral-950 text-sm font-semibold hover:from-emerald-400 hover:to-teal-400 transition-all duration-300 shadow-xl shadow-emerald-500/25 hover:shadow-emerald-500/40 hover:scale-105 active:scale-95"
+                className="group relative flex items-center gap-3 px-7 py-3.5 rounded-2xl bg-gradient-to-r from-emerald-500 to-teal-500 text-neutral-950 text-sm font-semibold hover:from-emerald-400 hover:to-teal-400 transition-all duration-300 shadow-xl shadow-emerald-500/25 hover:shadow-emerald-500/40 hover:scale-105 active:scale-95 cursor-pointer"
               >
                 <Plus className="w-5 h-5 transition-transform duration-300 group-hover:rotate-90" />
                 <span>Plan Your First Trip</span>
@@ -123,7 +123,7 @@ export function TripGallery({ trips, onSelectTrip, onCreateNew }: TripGalleryPro
                 <button
                   key={trip.id}
                   onClick={() => onSelectTrip(trip)}
-                  className={`group relative flex flex-col text-left p-5 rounded-2xl bg-neutral-900/50 border border-neutral-800/50 hover:bg-neutral-800/50 ${colors.border} transition-all duration-300 overflow-hidden backdrop-blur-sm hover:scale-[1.02] hover:shadow-xl ${colors.glow} ${isMounted ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'}`}
+                  className={`group relative flex flex-col text-left p-5 rounded-2xl bg-neutral-900/50 border border-neutral-800/50 hover:bg-neutral-800/50 ${colors.border} transition-all duration-300 overflow-hidden backdrop-blur-sm hover:scale-[1.02] hover:shadow-xl cursor-pointer ${colors.glow} ${isMounted ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'}`}
                   style={{ 
                     transitionDelay: isMounted ? `${150 + idx * 75}ms` : '0ms',
                   }}
@@ -179,7 +179,7 @@ export function TripGallery({ trips, onSelectTrip, onCreateNew }: TripGalleryPro
             {/* Add New Trip Card */}
             <button
               onClick={onCreateNew}
-              className={`group relative flex flex-col items-center justify-center min-h-[200px] p-6 rounded-2xl border-2 border-dashed border-neutral-800/80 hover:border-emerald-500/30 bg-neutral-900/20 hover:bg-neutral-900/40 transition-all duration-300 backdrop-blur-sm hover:scale-[1.02] ${isMounted ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'}`}
+              className={`group relative flex flex-col items-center justify-center min-h-[200px] p-6 rounded-2xl border-2 border-dashed border-neutral-800/80 hover:border-emerald-500/30 bg-neutral-900/20 hover:bg-neutral-900/40 transition-all duration-300 backdrop-blur-sm hover:scale-[1.02] cursor-pointer ${isMounted ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'}`}
               style={{ 
                 transitionDelay: isMounted ? `${150 + trips.length * 75}ms` : '0ms',
               }}

@@ -15,36 +15,36 @@ const exampleTrips = [
     title: "Tokyo Foodie",
     description: "Ramen, sushi & hidden izakayas",
     prompt: "5-day foodie tour in Tokyo under $2500",
-    color: "text-orange-400",
-    bg: "bg-gradient-to-br from-orange-500/20 to-amber-500/10",
-    glow: "group-hover:shadow-orange-500/20",
+    color: "text-rose-400",
+    bg: "bg-gradient-to-br from-rose-500/20 to-pink-500/10",
+    glow: "group-hover:shadow-rose-500/20",
   },
   {
-    icon: Coffee,
-    title: "Seoul Cafe Hopping",
-    description: "Aesthetic cafes & K-beauty",
-    prompt: "A week in Seoul exploring aesthetic cafes and high-tech skincare clinics",
-    color: "text-pink-400",
-    bg: "bg-gradient-to-br from-pink-500/20 to-rose-500/10",
-    glow: "group-hover:shadow-pink-500/20",
+    icon: Sparkles,
+    title: "Dubai Luxury",
+    description: "Skyscrapers, Shopping & Desert",
+    prompt: "5 days in Dubai experiencing luxury, Burj Khalifa and desert safari",
+    color: "text-amber-400",
+    bg: "bg-gradient-to-br from-amber-500/20 to-orange-500/10",
+    glow: "group-hover:shadow-amber-500/20",
   },
   {
     icon: Mountain,
-    title: "Patagonia Trek",
-    description: "Epic trails & glacial lakes",
-    prompt: "10-day hiking adventure in Patagonia",
-    color: "text-emerald-400",
-    bg: "bg-gradient-to-br from-emerald-500/20 to-teal-500/10",
-    glow: "group-hover:shadow-emerald-500/20",
+    title: "Red Sea Retreat",
+    description: "Diving, Beaches & Relaxation",
+    prompt: "7 days in Hurghada and Sharm El Sheikh for diving and relaxation",
+    color: "text-cyan-400",
+    bg: "bg-gradient-to-br from-cyan-500/20 to-blue-500/10",
+    glow: "group-hover:shadow-cyan-500/20",
   },
   {
     icon: Landmark,
     title: "Roman History",
     description: "Ancient ruins & Renaissance art",
     prompt: "Week of art and history exploration in Rome",
-    color: "text-blue-400",
-    bg: "bg-gradient-to-br from-blue-500/20 to-indigo-500/10",
-    glow: "group-hover:shadow-blue-500/20",
+    color: "text-violet-400",
+    bg: "bg-gradient-to-br from-violet-500/20 to-purple-500/10",
+    glow: "group-hover:shadow-violet-500/20",
   },
 ]
 
@@ -54,9 +54,40 @@ export function HeroState({ onSubmit }: HeroStateProps) {
   const [isMounted, setIsMounted] = useState(false)
   const [isFocused, setIsFocused] = useState(false)
 
+  /* Loading State Animation logic */
+  const loadingTexts = [
+    "Planning",
+    "Finding hidden gems",
+    "Optimizing itinerary",
+    "Checking weather",
+    "Calculating budget",
+    "Packing bags",
+    "Generating map",
+    "Planning" // Duplicate first for seamless loop
+  ]
+  const [loadingTextIndex, setLoadingTextIndex] = useState(0)
+
   useEffect(() => {
     setIsMounted(true)
   }, [])
+
+  useEffect(() => {
+    if (isSubmitting) {
+      const interval = setInterval(() => {
+        setLoadingTextIndex((prev) => {
+          // When reaching the duplicate, instantly reset to 0 after transition
+          if (prev >= loadingTexts.length - 2) {
+            setTimeout(() => setLoadingTextIndex(0), 500)
+            return loadingTexts.length - 1
+          }
+          return prev + 1
+        })
+      }, 2000)
+      return () => clearInterval(interval)
+    } else {
+      setLoadingTextIndex(0)
+    }
+  }, [isSubmitting])
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
@@ -128,7 +159,7 @@ export function HeroState({ onSubmit }: HeroStateProps) {
         {/* Premium Input Container */}
         <form 
           onSubmit={handleSubmit} 
-          className={`w-full mb-14 transition-all duration-700 delay-300 ${isMounted ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'}`}
+          className={`w-full transition-all duration-700 delay-300 ${isMounted ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'}`}
         >
           <div className={`relative group ${isFocused ? 'animate-glow-pulse' : ''}`}>
             {/* Input Glow Effect */}
@@ -151,21 +182,11 @@ export function HeroState({ onSubmit }: HeroStateProps) {
                 {prompt.trim() && !isSubmitting && (
                   <button
                     type="submit"
-                    className="flex items-center gap-2 px-4 py-2 rounded-xl bg-emerald-500/10 text-emerald-400 text-sm font-medium hover:bg-emerald-500/20 transition-all duration-300 hover:scale-105 active:scale-95"
+                    className="flex items-center gap-2 px-4 py-2 rounded-xl bg-emerald-500/10 text-emerald-400 text-sm font-medium hover:bg-emerald-500/20 transition-all duration-300 hover:scale-105 active:scale-95 cursor-pointer"
                   >
                     <span>Go</span>
                     <ArrowRight className="w-4 h-4" />
                   </button>
-                )}
-                {isSubmitting && (
-                  <div className="flex items-center gap-3 px-4 py-2">
-                    <div className="flex gap-1">
-                      <div className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-bounce" style={{ animationDelay: '0ms' }} />
-                      <div className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-bounce" style={{ animationDelay: '150ms' }} />
-                      <div className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-bounce" style={{ animationDelay: '300ms' }} />
-                    </div>
-                    <span className="text-sm text-emerald-400 font-medium">Planning...</span>
-                  </div>
                 )}
               </div>
               
@@ -175,11 +196,39 @@ export function HeroState({ onSubmit }: HeroStateProps) {
           </div>
         </form>
 
+        {/* Loading Status Text - Appears Below Input */}
+        {isSubmitting && (
+          <div className="flex items-center justify-center gap-3 mt-6 mb-8">
+            <div className="flex gap-1">
+              <div className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-bounce" style={{ animationDelay: '0ms' }} />
+              <div className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-bounce" style={{ animationDelay: '150ms' }} />
+              <div className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-bounce" style={{ animationDelay: '300ms' }} />
+            </div>
+            <div className="h-[24px] overflow-hidden">
+              <div 
+                className="transition-transform duration-500 ease-in-out" 
+                style={{ transform: `translateY(-${loadingTextIndex * 24}px)` }}
+              >
+                {loadingTexts.map((text, i) => (
+                  <div key={i} className="h-[24px] flex items-center">
+                    <span className="text-base text-emerald-400 font-medium whitespace-nowrap">
+                      {text}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Spacer when not submitting */}
+        {!isSubmitting && <div className="mb-14" />}
+
         {/* Example Cards Label */}
         <div 
           className={`flex items-center gap-2 mb-4 transition-all duration-700 delay-400 ${isMounted ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'}`}
         >
-          <span className="text-xs text-neutral-600 uppercase tracking-wider font-medium">Try an example</span>
+          <span className="text-xs text-neutral-600 uppercase tracking-wider font-medium">Or explore curated experiences</span>
         </div>
 
         {/* Example Cards - 2x2 Grid */}
@@ -190,7 +239,7 @@ export function HeroState({ onSubmit }: HeroStateProps) {
               type="button"
               onClick={() => handleCardClick(trip.prompt)}
               disabled={isSubmitting}
-              className={`relative flex items-center gap-4 p-4 rounded-2xl bg-neutral-900/50 hover:bg-neutral-800/50 border border-neutral-800/50 hover:border-neutral-700/50 transition-all duration-300 text-left group hover:scale-[1.02] hover:shadow-xl ${trip.glow} disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100 backdrop-blur-sm ${isMounted ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'}`}
+              className={`relative flex items-center gap-4 p-4 rounded-2xl bg-neutral-900/50 hover:bg-neutral-800/50 border border-neutral-800/50 hover:border-neutral-700/50 transition-all duration-300 text-left group hover:scale-[1.02] hover:shadow-xl ${trip.glow} disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100 backdrop-blur-sm cursor-pointer ${isMounted ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'}`}
               style={{ 
                 transitionDelay: isMounted ? `${500 + idx * 75}ms` : '0ms',
               }}

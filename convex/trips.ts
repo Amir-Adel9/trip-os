@@ -7,10 +7,15 @@ import type { TripState } from "../types/trip";
  * Returns an array of all trip documents, sorted by createdAt descending.
  */
 export const listTrips = query({
-  args: {},
-  handler: async (ctx) => {
+  args: {
+    userId: v.optional(v.string())
+  },
+  handler: async (ctx, args) => {
+    if (!args.userId) return [];
+    
     const trips = await ctx.db
       .query("trips")
+      .withIndex("by_user_id", (q) => q.eq("userId", args.userId!))
       .order("desc")
       .collect();
     
@@ -47,6 +52,7 @@ export const getTrip = query({
  */
 export const createTrip = mutation({
   args: {
+    userId: v.string(),
     destination: v.string(),
     title: v.string(),
     summary: v.string(),
@@ -57,6 +63,7 @@ export const createTrip = mutation({
   handler: async (ctx, args) => {
     const now = Date.now();
     const tripId = await ctx.db.insert("trips", {
+      userId: args.userId,
       destination: args.destination,
       title: args.title,
       summary: args.summary,

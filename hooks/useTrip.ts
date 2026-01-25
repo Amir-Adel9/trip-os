@@ -9,8 +9,15 @@ import type { TripState } from "@/types/trip";
  * Hook to fetch all trips
  * Returns an array of trips or undefined while loading.
  */
+import { useSession } from "./useSession";
+
+/**
+ * Hook to fetch all trips
+ * Returns an array of trips or undefined while loading.
+ */
 export function useListTrips() {
-  return useQuery(api.trips.listTrips);
+  const userId = useSession();
+  return useQuery(api.trips.listTrips, { userId: userId ?? undefined });
 }
 
 /**
@@ -29,7 +36,13 @@ export function useTrip(tripId: Id<"trips"> | undefined) {
  * Returns a mutation function that accepts trip data (without id, createdAt, updatedAt).
  */
 export function useCreateTrip() {
-  return useMutation(api.trips.createTrip);
+  const userId = useSession();
+  const mutation = useMutation(api.trips.createTrip);
+  
+  return async (args: Omit<Parameters<typeof mutation>[0], "userId">) => {
+    if (!userId) throw new Error("User session not initialized");
+    return mutation({ ...args, userId });
+  };
 }
 
 /**
