@@ -126,11 +126,11 @@ ${JSON.stringify(newTripData, null, 2)}
         },
       });
 
-      // Poll for bot reply (increased timeout to 60 seconds)
-      const maxAttempts = 60;
+      // Poll for bot reply (increased timeout to 120 seconds for complex trip generation)
+      const maxAttempts = 120;
       const pollInterval = 1000;
       
-      console.log('[Botpress] Waiting for bot response... (max 60 seconds)')
+      console.log('[Botpress] Waiting for bot response... (max 120 seconds)')
       
       for (let i = 0; i < maxAttempts; i++) {
         await new Promise(r => setTimeout(r, pollInterval));

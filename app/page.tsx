@@ -1,5 +1,5 @@
-import { TripOS } from "@/components/trip-os"
+import { HomePage } from "@/components/home-page";
 
 export default function Page() {
-  return <TripOS />
+  return <HomePage />;
 }

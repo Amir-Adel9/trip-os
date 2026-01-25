@@ -87,11 +87,33 @@ export function mapBotpressToTripData(data: Record<string, any>): TripData | nul
       return resultDay;
     });
 
+    // Calculate total of all event costs
+    const actualTotalCost = mappedDays.reduce((sum, day) => 
+      sum + day.events.reduce((eventSum, event) => eventSum + event.cost, 0), 0
+    );
+
+    // Normalize costs to match budget if needed
+    const targetBudget = Number(totalBudget);
+    const currency = String(budget?.currency || data.currency || "USD");
+    
+    if (actualTotalCost > 0 && targetBudget > 0 && Math.abs(actualTotalCost - targetBudget) > 1) {
+      const scaleFactor = targetBudget / actualTotalCost;
+      console.log(`[Mapping] Scaling costs by ${scaleFactor.toFixed(2)} to match budget`);
+      
+      mappedDays.forEach(day => {
+        day.events.forEach(event => {
+          event.cost = Math.round(event.cost * scaleFactor);
+        });
+        // Recalculate day total
+        day.totalCost = day.events.reduce((sum, e) => sum + e.cost, 0);
+      });
+    }
+
     const finalResult: TripData = {
       destination: String(data.destination || "Unknown Destination"),
       duration: String(duration),
-      totalBudget: Number(totalBudget),
-      currency: String(budget?.currency || data.currency || "USD"),
+      totalBudget: targetBudget,
+      currency: currency,
       days: mappedDays
     };
     
