@@ -54,13 +54,20 @@ export function DayNavigation({ days, selectedDay, onDaySelect }: DayNavigationP
       {/* Separator - no border, just spacing */}
       <div className="mx-5 h-px bg-neutral-800/30" />
 
-      {/* Focus Section */}
-      <div className="px-5 py-5 animate-fade-in" style={{ animationDelay: "300ms" }}>
-        <span className="font-mono text-[10px] text-neutral-600 uppercase tracking-[0.2em] font-medium block mb-3">
-          Focus
-        </span>
-        <p className="text-sm text-emerald-400/90 italic hover:text-emerald-400 transition-colors duration-300 cursor-default">&quot;Luxury and Tradition&quot;</p>
-      </div>
+      {/* Focus Section - shows selected day's title */}
+      {(() => {
+        const currentDay = days.find(d => d.day === selectedDay)
+        return currentDay?.title ? (
+          <div className="px-5 py-5 animate-fade-in" style={{ animationDelay: "300ms" }}>
+            <span className="font-mono text-[10px] text-neutral-600 uppercase tracking-[0.2em] font-medium block mb-3">
+              Focus
+            </span>
+            <p className="text-sm text-emerald-400/90 italic hover:text-emerald-400 transition-colors duration-300 cursor-default">
+              &quot;{currentDay.title}&quot;
+            </p>
+          </div>
+        ) : null
+      })()}
     </div>
   )
 }

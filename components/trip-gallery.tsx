@@ -1,12 +1,23 @@
 "use client"
 
 import React, { useState, useEffect } from "react"
-import { MapPin, Calendar, Plus, Sparkles, ArrowRight, Compass, Globe } from "lucide-react"
+import { MapPin, Calendar, Plus, Sparkles, ArrowRight, Compass, Globe, Trash2 } from "lucide-react"
 import type { TripState } from "@/types/trip"
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog"
 
 interface TripGalleryProps {
   trips: TripState[]
   onSelectTrip: (trip: TripState) => void
+  onDeleteTrip: (id: string) => void
   onCreateNew: () => void
 }
 
@@ -20,8 +31,9 @@ const destinationColors = [
   { bg: "from-cyan-500/20 to-sky-500/10", glow: "group-hover:shadow-cyan-500/20", accent: "text-cyan-400", border: "group-hover:border-cyan-500/30" },
 ]
 
-export function TripGallery({ trips, onSelectTrip, onCreateNew }: TripGalleryProps) {
+export function TripGallery({ trips, onSelectTrip, onDeleteTrip, onCreateNew }: TripGalleryProps) {
   const [isMounted, setIsMounted] = useState(false)
+  const [tripToDelete, setTripToDelete] = useState<TripState | null>(null)
 
   useEffect(() => {
     setIsMounted(true)
@@ -29,6 +41,18 @@ export function TripGallery({ trips, onSelectTrip, onCreateNew }: TripGalleryPro
 
   const getColorForTrip = (index: number) => {
     return destinationColors[index % destinationColors.length]
+  }
+
+  const handleDeleteClick = (e: React.MouseEvent, trip: TripState) => {
+    e.stopPropagation()
+    setTripToDelete(trip)
+  }
+
+  const confirmDelete = () => {
+    if (tripToDelete) {
+      onDeleteTrip(tripToDelete.id)
+      setTripToDelete(null)
+    }
   }
 
   return (
@@ -120,7 +144,7 @@ export function TripGallery({ trips, onSelectTrip, onCreateNew }: TripGalleryPro
             {trips.map((trip, idx) => {
               const colors = getColorForTrip(idx)
               return (
-                <button
+                <div
                   key={trip.id}
                   onClick={() => onSelectTrip(trip)}
                   className={`group relative flex flex-col text-left p-5 rounded-2xl bg-neutral-900/50 border border-neutral-800/50 hover:bg-neutral-800/50 ${colors.border} transition-all duration-300 overflow-hidden backdrop-blur-sm hover:scale-[1.02] hover:shadow-xl cursor-pointer ${colors.glow} ${isMounted ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'}`}
@@ -141,11 +165,20 @@ export function TripGallery({ trips, onSelectTrip, onCreateNew }: TripGalleryPro
                       <div className={`w-11 h-11 rounded-xl bg-gradient-to-br ${colors.bg} flex items-center justify-center border border-white/5 group-hover:border-white/10 transition-all duration-300 group-hover:scale-110 group-hover:rotate-3`}>
                         <MapPin className={`w-5 h-5 ${colors.accent} transition-all duration-300`} />
                       </div>
-                      <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white/5 border border-white/5 backdrop-blur-sm">
-                        <Calendar className="w-3 h-3 text-neutral-500" />
-                        <span className="text-[11px] font-medium text-neutral-400">
-                          {trip.days.length} {trip.days.length === 1 ? 'Day' : 'Days'}
-                        </span>
+                      <div className="flex items-center gap-2">
+                        <button
+                          onClick={(e) => handleDeleteClick(e, trip)}
+                          className="p-2 rounded-lg bg-red-500/10 border border-red-500/20 text-red-400 hover:bg-red-500/20 hover:border-red-500/30 transition-all duration-300 opacity-0 group-hover:opacity-100 z-20 cursor-pointer"
+                          title="Delete Trip"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </button>
+                        <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white/5 border border-white/5 backdrop-blur-sm">
+                          <Calendar className="w-3 h-3 text-neutral-500" />
+                          <span className="text-[11px] font-medium text-neutral-400">
+                            {trip.days.length} {trip.days.length === 1 ? 'Day' : 'Days'}
+                          </span>
+                        </div>
                       </div>
                     </div>
 
@@ -172,7 +205,7 @@ export function TripGallery({ trips, onSelectTrip, onCreateNew }: TripGalleryPro
                       </div>
                     </div>
                   </div>
-                </button>
+                </div>
               )
             })}
             
@@ -208,6 +241,30 @@ export function TripGallery({ trips, onSelectTrip, onCreateNew }: TripGalleryPro
           </span>
         </div>
       </div>
+
+      <AlertDialog open={!!tripToDelete} onOpenChange={(open) => !open && setTripToDelete(null)}>
+        <AlertDialogContent className="bg-neutral-900/90 border border-neutral-700/50 text-white shadow-2xl shadow-black/50 overflow-hidden">
+          <div className="absolute inset-0 bg-gradient-to-br from-red-500/5 to-transparent pointer-events-none" />
+          <div className="absolute top-0 right-0 w-32 h-32 bg-red-500/10 rounded-full blur-3xl pointer-events-none" />
+          <AlertDialogHeader className="relative z-10">
+            <AlertDialogTitle className="text-white">Delete Trip</AlertDialogTitle>
+            <AlertDialogDescription className="text-neutral-400">
+              Are you sure you want to delete your trip to <span className="text-white font-medium">{tripToDelete?.destination}</span>? This action cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter className="relative z-10">
+            <AlertDialogCancel className="bg-neutral-800/80 border-neutral-700/50 text-neutral-300 hover:bg-neutral-700/80 hover:text-white transition-all duration-300 cursor-pointer">
+              Cancel
+            </AlertDialogCancel>
+            <AlertDialogAction
+              onClick={confirmDelete}
+              className="bg-red-500/20 border border-red-500/30 text-red-400 hover:bg-red-500/30 hover:border-red-500/40 hover:text-red-300 transition-all duration-300 cursor-pointer"
+            >
+              Delete Trip
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   )
 }

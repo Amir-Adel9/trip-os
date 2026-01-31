@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation"
 import { HeroState } from "@/components/hero-state"
 import { TripGallery } from "@/components/trip-gallery"
 import { useBotpressBrain } from "@/hooks/useBotpressBrain"
-import { useCreateTrip, useListTrips } from "@/hooks/useTrip"
+import { useCreateTrip, useListTrips, useDeleteTrip } from "@/hooks/useTrip"
 import { mapBotpressToTripData, isValidTripData, extractTripJson } from "@/lib/trip-utils"
 import type { TripData } from "@/lib/trip-types"
 import type { TripState } from "@/types/trip"
@@ -13,8 +13,9 @@ import type { TripState } from "@/types/trip"
 export function HomePage() {
   const router = useRouter()
   const createTripMutation = useCreateTrip()
+  const deleteTripMutation = useDeleteTrip()
   const savedTrips = useListTrips()
-  const { sendToBrain, isReady, isReadyRef } = useBotpressBrain()
+  const { sendToBrain } = useBotpressBrain()
   
   const [isSubmitting, setIsSubmitting] = useState(false)
 
@@ -28,20 +29,6 @@ export function HomePage() {
     const timestamp = () => new Date().toLocaleTimeString()
     console.log(`[${timestamp()}] Processing request: "${prompt}"`)
 
-    // Wait for Botpress connection
-    const startTime = Date.now()
-    const maxWaitTime = 10000 // 10 seconds
-    
-    while (!isReadyRef.current && (Date.now() - startTime) < maxWaitTime) {
-      await new Promise(resolve => setTimeout(resolve, 500))
-    }
-    
-    if (!isReadyRef.current) {
-      console.error('[Botpress] Connection timeout')
-      setIsSubmitting(false)
-      return
-    }
-    
     try {
       // Call Botpress
       const response = await sendToBrain(prompt)
@@ -88,6 +75,14 @@ export function HomePage() {
     router.push(`/trip/${trip.id}`)
   }
 
+  const handleDeleteTrip = async (tripId: string) => {
+    try {
+      await deleteTripMutation({ tripId: tripId as any })
+    } catch (error) {
+      console.error('Failed to delete trip:', error)
+    }
+  }
+
   return (
     <div className="relative min-h-screen bg-neutral-950 overflow-hidden text-white overflow-y-auto scrollbar-hide">
       <div className="fixed inset-0 bg-[radial-gradient(ellipse_80%_50%_at_50%_-20%,rgba(120,119,198,0.15),transparent)]" />
@@ -101,6 +96,7 @@ export function HomePage() {
           <TripGallery 
             trips={savedTrips} 
             onSelectTrip={handleSelectTrip} 
+            onDeleteTrip={handleDeleteTrip}
             onCreateNew={() => {
               window.scrollTo({ top: 0, behavior: 'smooth' })
             }} 

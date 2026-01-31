@@ -60,3 +60,11 @@ export function useUpdateTrip() {
 export function useAppendLog() {
   return useMutation(api.trips.appendLog);
 }
+
+/**
+ * Hook to delete a trip
+ * Returns a mutation function that accepts tripId.
+ */
+export function useDeleteTrip() {
+  return useMutation(api.trips.deleteTrip);
+}

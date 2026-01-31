@@ -18,5 +18,7 @@ export default defineSchema({
     logs: v.any(), // JSON array of strings
     createdAt: v.number(),
     updatedAt: v.number(),
+    // Legacy field - no longer used (tripId is now used directly as conversation ID)
+    botpressConversationId: v.optional(v.string()),
   }).index("by_user_id", ["userId"]),
 });

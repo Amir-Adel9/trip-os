@@ -128,3 +128,20 @@ export const appendLog = mutation({
     });
   },
 });
+
+/**
+ * Mutation: Delete a trip
+ * Removes the trip document from the database.
+ */
+export const deleteTrip = mutation({
+  args: {
+    tripId: v.id("trips"),
+  },
+  handler: async (ctx, args) => {
+    const existing = await ctx.db.get(args.tripId);
+    if (!existing) {
+      throw new Error(`Trip with id ${args.tripId} not found`);
+    }
+    await ctx.db.delete(args.tripId);
+  },
+});

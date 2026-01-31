@@ -1,10 +1,11 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useMemo } from "react"
 import { useParams, useRouter } from "next/navigation"
 import { Dashboard } from "@/components/dashboard"
-import { useTrip, useUpdateTrip, useCreateTrip } from "@/hooks/useTrip"
+import { useTrip, useUpdateTrip } from "@/hooks/useTrip"
 import { useBotpressBrain } from "@/hooks/useBotpressBrain"
+import { useSession } from "@/hooks/useSession"
 import type { TripData } from "@/lib/trip-types"
 import type { Id } from "@/convex/_generated/dataModel"
 
@@ -12,6 +13,7 @@ export function TripPage() {
   const params = useParams()
   const router = useRouter()
   const tripId = params.id as Id<"trips">
+  const userId = useSession()
   
   const trip = useTrip(tripId)
   const updateTrip = useUpdateTrip()
@@ -20,7 +22,20 @@ export function TripPage() {
   const [selectedDay, setSelectedDay] = useState(1)
   const [systemLogs, setSystemLogs] = useState<string[]>([])
   
-  const { sendToBrain, loading: botpressLoading, error: botpressError, isReady } = useBotpressBrain()
+  // Compute tripData early so it can be passed to the hook
+  const tripData: TripData | undefined = useMemo(() => {
+    if (!trip) return undefined
+    return {
+      destination: trip.destination,
+      duration: `${trip.days.length} days`,
+      totalBudget: trip.budget.total,
+      days: trip.days
+    }
+  }, [trip])
+  
+  // Pass tripData to the hook - context will be sent when both conversation and tripData are ready
+  // userId enables persistent Botpress identity across browser sessions
+  const { sendToBrain, messages, loading: botpressLoading, error: botpressError, isReady } = useBotpressBrain(tripId, tripData, userId ?? undefined)
 
   if (trip === undefined) {
     return (
@@ -71,12 +86,9 @@ export function TripPage() {
     )
   }
 
-  const tripData: TripData = {
-    destination: trip.destination,
-    duration: `${trip.days.length} days`, // Approximation or we need to store duration string
-    totalBudget: trip.budget.total,
-    days: trip.days
-  }
+  // tripData is guaranteed to be defined here since we returned early if trip was null/undefined
+  // TypeScript assertion for safety
+  if (!tripData) return null
 
   const handleAdaptation = async (action: string, newTripData?: TripData) => {
     const timestamp = new Date().toLocaleTimeString()
@@ -135,6 +147,7 @@ export function TripPage() {
           onAdapt={handleAdaptation}
           onReset={handleReset}
           sendToBrain={sendToBrain}
+          messages={messages}
           loading={botpressLoading}
           isReady={isReady}
           error={botpressError}
